@@ -5,9 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MainLayout from "@/layouts/MainLayout";
 import Home from "@/pages/Home";
-import Explore from "@/pages/Explore";
 import Profile from "@/pages/Profile";
 import CreatePost from "@/pages/CreatePost";
+import Notifications from "@/pages/Notifications";
+import Messages from "@/pages/Messages";
+import SearchPage from "@/pages/SearchPage";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
@@ -25,9 +27,11 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
-            <Route path="/explore" element={<Explore />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/create" element={<CreatePost />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/search" element={<SearchPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

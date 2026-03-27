@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, PlusSquare, Heart, User, Compass, MessageCircle } from "lucide-react";
+import { Home, Search, PlusSquare, Heart, User, MessageCircle } from "lucide-react";
 
 const Navbar = () => {
   const { pathname } = useLocation();
 
   const navItems = [
     { to: "/", icon: Home, label: "Home" },
-    { to: "/explore", icon: Compass, label: "Explore" },
+    { to: "/search", icon: Search, label: "Search" },
     { to: "/create", icon: PlusSquare, label: "Create" },
     { to: "/notifications", icon: Heart, label: "Notifications" },
     { to: "/profile", icon: User, label: "Profile" },
@@ -20,9 +20,6 @@ const Navbar = () => {
           Anagram
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/explore" className="text-foreground transition-colors hover:text-muted-foreground">
-            <Search size={22} />
-          </Link>
           <Link to="/messages" className="text-foreground transition-colors hover:text-muted-foreground">
             <MessageCircle size={22} />
           </Link>
