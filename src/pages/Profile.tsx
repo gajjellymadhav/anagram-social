@@ -3,18 +3,47 @@ import { api } from "@/services/api";
 import type { User, Post } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/anagram/EmptyState";
-import { Grid3X3, Settings, Camera } from "lucide-react";
+import AccountSettings from "@/components/anagram/AccountSettings";
+import FollowListModal from "@/components/anagram/FollowListModal";
+import ProfilePhotoMenu from "@/components/anagram/ProfilePhotoMenu";
+import { Grid3X3, MoreHorizontal, Camera, Lock, Globe, Trash2 } from "lucide-react";
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [privacyLoading, setPrivacyLoading] = useState(false);
 
   useEffect(() => {
     api.getUserProfile("me").then(setUser).catch(() => {}).finally(() => setLoadingUser(false));
     api.getUserPosts("me").then(setPosts).catch(() => {}).finally(() => setLoadingPosts(false));
   }, []);
+
+  const handleTogglePrivacy = async () => {
+    if (!user) return;
+    setPrivacyLoading(true);
+    try {
+      await api.togglePrivacy(!user.isPrivate);
+      setUser({ ...user, isPrivate: !user.isPrivate });
+    } catch {
+      // handle error
+    } finally {
+      setPrivacyLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await api.deletePost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch {
+      // handle error
+    }
+  };
 
   return (
     <div className="mx-auto max-w-[935px] px-4">
@@ -24,15 +53,20 @@ const Profile = () => {
           {loadingUser ? (
             <Skeleton className="h-20 w-20 rounded-full sm:h-36 sm:w-36" />
           ) : (
-            <div className="h-20 w-20 overflow-hidden rounded-full bg-secondary sm:h-36 sm:w-36">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.username} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground sm:text-4xl">
-                  {user?.username?.[0]?.toUpperCase()}
-                </div>
-              )}
-            </div>
+            <button onClick={() => setShowPhotoMenu(true)} className="group relative">
+              <div className="h-20 w-20 overflow-hidden rounded-full bg-secondary sm:h-36 sm:w-36">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.username} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground sm:text-4xl">
+                    {user?.username?.[0]?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/0 opacity-0 transition-all group-hover:bg-foreground/20 group-hover:opacity-100">
+                <Camera size={20} className="text-background" />
+              </div>
+            </button>
           )}
         </div>
 
@@ -46,8 +80,17 @@ const Profile = () => {
                 <button className="rounded-lg bg-secondary px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-border">
                   Edit profile
                 </button>
-                <button className="text-foreground">
-                  <Settings size={22} />
+                <button
+                  onClick={handleTogglePrivacy}
+                  disabled={privacyLoading}
+                  className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-sm transition-colors hover:bg-border disabled:opacity-50"
+                  title={user?.isPrivate ? "Switch to Public" : "Switch to Private"}
+                >
+                  {user?.isPrivate ? <Lock size={14} /> : <Globe size={14} />}
+                  <span className="text-xs font-medium">{user?.isPrivate ? "Private" : "Public"}</span>
+                </button>
+                <button onClick={() => setShowSettings(true)} className="text-foreground">
+                  <MoreHorizontal size={22} />
                 </button>
               </>
             )}
@@ -60,8 +103,12 @@ const Profile = () => {
               : (
                 <>
                   <span className="text-sm"><strong>{user?.postsCount ?? 0}</strong> posts</span>
-                  <span className="text-sm"><strong>{user?.followersCount ?? 0}</strong> followers</span>
-                  <span className="text-sm"><strong>{user?.followingCount ?? 0}</strong> following</span>
+                  <button onClick={() => setFollowListType("followers")} className="text-sm hover:underline">
+                    <strong>{user?.followersCount ?? 0}</strong> followers
+                  </button>
+                  <button onClick={() => setFollowListType("following")} className="text-sm hover:underline">
+                    <strong>{user?.followingCount ?? 0}</strong> following
+                  </button>
                 </>
               )}
           </div>
@@ -80,14 +127,14 @@ const Profile = () => {
               <p className="font-semibold text-sm">{user?.postsCount ?? 0}</p>
               <p className="text-xs text-muted-foreground">posts</p>
             </div>
-            <div className="text-center">
+            <button onClick={() => setFollowListType("followers")} className="text-center">
               <p className="font-semibold text-sm">{user?.followersCount ?? 0}</p>
               <p className="text-xs text-muted-foreground">followers</p>
-            </div>
-            <div className="text-center">
+            </button>
+            <button onClick={() => setFollowListType("following")} className="text-center">
               <p className="font-semibold text-sm">{user?.followingCount ?? 0}</p>
               <p className="text-xs text-muted-foreground">following</p>
-            </div>
+            </button>
           </>
         )}
       </div>
@@ -115,12 +162,33 @@ const Profile = () => {
       ) : (
         <div className="grid grid-cols-3 gap-1">
           {posts.map((post) => (
-            <button key={post.id} className="group relative aspect-square overflow-hidden">
+            <div key={post.id} className="group relative aspect-square overflow-hidden">
               <img src={post.imageUrl} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
-            </button>
+              <div className="absolute inset-0 flex items-center justify-center gap-3 bg-foreground/0 opacity-0 transition-all group-hover:bg-foreground/20 group-hover:opacity-100">
+                <span className="text-sm font-semibold text-background">♥ {post.likesCount}</span>
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="rounded-full bg-background/80 p-1.5 text-destructive transition-colors hover:bg-background"
+                  title="Delete post"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
+
+      {/* Modals */}
+      <AccountSettings open={showSettings} onClose={() => setShowSettings(false)} />
+      {followListType && user && (
+        <FollowListModal username={user.username} type={followListType} onClose={() => setFollowListType(null)} />
+      )}
+      <ProfilePhotoMenu
+        open={showPhotoMenu}
+        onClose={() => setShowPhotoMenu(false)}
+        onUpdated={(avatar) => user && setUser({ ...user, avatar })}
+      />
     </div>
   );
 };
