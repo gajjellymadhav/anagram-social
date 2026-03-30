@@ -3,17 +3,17 @@ import { api } from "@/services/api";
 import type { User, Post } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/anagram/EmptyState";
-
+import AccountSettings from "@/components/anagram/AccountSettings";
 import FollowListModal from "@/components/anagram/FollowListModal";
 import ProfilePhotoMenu from "@/components/anagram/ProfilePhotoMenu";
-import { Grid3X3, Camera, Lock, Globe, Trash2 } from "lucide-react";
+import { Grid3X3, MoreHorizontal, Camera, Lock, Globe, Trash2 } from "lucide-react";
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
-  
+  const [showSettings, setShowSettings] = useState(false);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [privacyLoading, setPrivacyLoading] = useState(false);
@@ -88,6 +88,9 @@ const Profile = () => {
                 >
                   {user?.isPrivate ? <Lock size={14} /> : <Globe size={14} />}
                   <span className="text-xs font-medium">{user?.isPrivate ? "Private" : "Public"}</span>
+                </button>
+                <button onClick={() => setShowSettings(true)} className="text-foreground">
+                  <MoreHorizontal size={22} />
                 </button>
               </>
             )}
@@ -177,7 +180,7 @@ const Profile = () => {
       )}
 
       {/* Modals */}
-      
+      <AccountSettings open={showSettings} onClose={() => setShowSettings(false)} />
       {followListType && user && (
         <FollowListModal username={user.username} type={followListType} onClose={() => setFollowListType(null)} />
       )}
